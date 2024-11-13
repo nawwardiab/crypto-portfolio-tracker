@@ -76,14 +76,14 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    backgroundColor: "#f0f2f5",
+    backgroundColor: "#111111",
   },
   form: {
     width: "300px",
     padding: "20px",
     borderRadius: "8px",
     boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-    backgroundColor: "white",
+    backgroundColor: "#333333",
     textAlign: "center",
   },
   header: {
