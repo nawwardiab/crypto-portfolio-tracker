@@ -3,20 +3,31 @@
 import { useEffect } from "react";
 import { useFirebaseAuth } from "@/services/useFirebaseAuth";
 import { useSelector, useDispatch } from "react-redux";
-import { setPortfolio, addCrypto } from "@/features/portfolioSlice";
+import {
+  setPortfolio,
+  addCrypto,
+  removeCrypto,
+  updateCrypto,
+} from "@/features/portfolioSlice";
 
 const Portfolio = () => {
   const { savePortfolio, getPortfolio } = useFirebaseAuth();
   const user = useSelector((state) => state.auth.user);
-  const portfolio = useSelector((state) => state.portfolio);
+  const portfolio = useSelector((state) => state.portfolio) || {
+    assets: [],
+    totalValue: 0,
+  }; // Ensure default value
   const dispatch = useDispatch();
 
+  // Fetch the portfolio when the user logs in
   useEffect(() => {
     const fetchPortfolio = async () => {
       if (!user) return;
 
       try {
         const portfolioData = await getPortfolio(user.uid);
+        console.log("Fetched portfolio data:", portfolioData); // Log fetched data to verify
+
         if (portfolioData) {
           dispatch(setPortfolio(portfolioData));
         } else {
@@ -27,56 +38,103 @@ const Portfolio = () => {
       }
     };
 
-    if (user && portfolio?.assets?.length === 0) {
+    // Fetch the portfolio only if the user is logged in and the Redux portfolio is empty
+    if (user) {
       fetchPortfolio();
     }
-  }, [user, getPortfolio, dispatch, portfolio?.assets?.length]);
+  }, [user, getPortfolio, dispatch]);
+
+  // Using useEffect to save portfolio when changes occur
+
+  useEffect(() => {
+    if (user && portfolio.assets.length > 0) {
+      const savePortfolioToFirestore = async () => {
+        try {
+          console.log("Saving updated portfolio to Firestore:", portfolio);
+          await savePortfolio(user.uid, portfolio);
+          console.log("Portfolio saved successfully!");
+        } catch (error) {
+          console.error("Error saving portfolio:", error);
+        }
+      };
+      savePortfolioToFirestore();
+    }
+  }, [user, portfolio, savePortfolio]);
 
   const addDummyAsset = () => {
     if (!user) {
       console.error("Cannot add an asset without logging in.");
       return;
     }
-    dispatch(
-      addCrypto({
-        id: Date.now(),
-        name: "Bitcoin",
-        amount: 1,
-        value: 30000,
-      })
-    );
+
+    const newAsset = {
+      id: Date.now(),
+      name: "Bitcoin",
+      amount: 1,
+      value: 30000,
+    };
+    dispatch(addCrypto(newAsset)); // Update the Redux state with the new asset
   };
 
+  /*
   const handleSavePortfolio = async () => {
     if (!user) {
       console.error("No user is logged in.");
       return;
     }
-    console.log("Saving the following portfolio:", portfolio);
+
+    // Fallbacks to prevent undefinded values from being saved
+    const portfolioToSave = {
+      assets: portfolio.assets || [], // Fallback to an empty array if assets is undefined
+      totalValue: portfolio.totalValue !== undefined ? portfolio.totalValue : 0, // Fallback to 0 if totalValue is undefined
+    };
+    console.log("Saving portfolio data for user:", user.uid);
+    console.log("Portfolio data to save:", portfolioToSave); // Log the portfolio data to inspect what is being saved
+
     try {
-      await savePortfolio(user.uid, portfolio);
+      await savePortfolio(user.uid, portfolioToSave);
       console.log("Portfolio data saved!");
     } catch (error) {
       console.error("Error saving portfolio:", error);
     }
   };
+*/
 
   return (
     <div>
       <h2>Manage Your Portfolio</h2>
-      {user ? (
-        <>
-          <button onClick={addDummyAsset}>Add Bitcoin</button>
-          <button onClick={handleSavePortfolio}>Save Portfolio</button>
-
-          <div>
-            <h3>Portfolio Details:</h3>
-            <pre>{JSON.stringify(portfolio, null, 2)}</pre>
-          </div>
-        </>
-      ) : (
-        <p>Please log in to manage your portfolio.</p>
-      )}
+      <button onClick={addDummyAsset}>Add Bitcoin</button>
+      <div>
+        <h3>Portfolio Details:</h3>
+        <ul>
+          {portfolio.assets && portfolio.assets.length > 0 ? (
+            portfolio.assets.map((asset) => (
+              <li key={asset.id}>
+                <span>
+                  {asset.name} - Amount: {asset.amount} - Value: ${asset.value}
+                </span>
+                <button onClick={() => dispatch(removeCrypto(asset.id))}>
+                  Delete
+                </button>
+                <button
+                  onClick={() =>
+                    dispatch(
+                      updateCrypto({
+                        id: asset.id,
+                        updatedAsset: { ...asset, amount: asset.amount + 1 },
+                      })
+                    )
+                  }
+                >
+                  Edit
+                </button>
+              </li>
+            ))
+          ) : (
+            <p>No assets in your portfolio yet</p>
+          )}
+        </ul>
+      </div>
     </div>
   );
 };

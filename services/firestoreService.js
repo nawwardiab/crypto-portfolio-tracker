@@ -27,11 +27,18 @@ const auth = getAuth(firebaseApp);
 export const getPortfolio = async (userId) => {
   if (!db) return;
   try {
+    console.log("Fetching portfolio for user:", userId); // Log before fetching data
+
     const portfolioDoc = await getDoc(doc(db, "portfolios", userId));
     if (portfolioDoc.exists()) {
-      return portfolioDoc.data(); // Return the portfolio data if it exists
+      const fetchedData = portfolioDoc.data();
+      console.log("Portfolio data fetched successfully:", portfolioDoc.data()); // Log fetched data
+      return {
+        assets: fetchedData.portfolio || [],
+        totalValue: fetchedData.totalValue || 0,
+      };
     } else {
-      console.error("No portfolio found for user:", userId);
+      console.warn("No portfolio found for user:", userId);
       return { assets: [], totalValue: 0 };
     }
   } catch (error) {
@@ -43,7 +50,18 @@ export const getPortfolio = async (userId) => {
 export const savePortfolio = async (userId, portfolioData) => {
   if (!db) return;
   try {
-    await setDoc(doc(db, "portfolios", userId), portfolioData);
+    console.log("Attempting to save portfolio to Firestore for user:", userId);
+    console.log("Portfolio data to be saved:", portfolioData); // Log data being saved
+
+    // Ensure portfolioData.assets is never undefined
+    const dataToSave = {
+      portfolio: portfolioData.assets || [], // Fallback to an empty array if undefined
+      totalValue:
+        portfolioData.totalValue !== undefined ? portfolioData.totalValue : 0, // Fallback to 0 if undefined
+    };
+
+    await setDoc(doc(db, "portfolios", userId), dataToSave, { merge: true });
+
     console.log("Portfolio saved successfully for user:", userId);
   } catch (error) {
     console.error("Error saving portfolio:", error.message);
