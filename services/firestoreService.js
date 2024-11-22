@@ -7,15 +7,15 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
 } from "firebase/auth";
-
+console.log(process.env.NEXT_PUBLIC_API_KEY);
 // Firebase Configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAxM2V8whOe_dURuuDz0OLL99OsbxazyWQ",
-  authDomain: "crypto-portfolio-tracker-cb3ad.firebaseapp.com",
-  projectId: "crypto-portfolio-tracker-cb3ad",
-  storageBucket: "crypto-portfolio-tracker-cb3ad.firebasestorage.app",
-  messagingSenderId: "658570634400",
-  appId: "1:658570634400:web:dc8ded274701ed2abc55c5",
+  apiKey: process.env.NEXT_PUBLIC_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_APP_ID,
 };
 
 // Initialize Firebase only once
