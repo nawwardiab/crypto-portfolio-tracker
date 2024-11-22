@@ -21,7 +21,7 @@ const firebaseConfig = {
 // Initialize Firebase only once
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
-const auth = getAuth(firebaseApp);
+export const auth = getAuth(firebaseApp);
 
 // Firestore Portfolio Operations
 export const getPortfolio = async (userId) => {

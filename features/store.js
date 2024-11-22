@@ -1,13 +1,31 @@
-import { configureStore } from "@reduxjs/toolkit";
-import portfolioReducer from "./portfolioSlice";
-import authReducer from "./authSlice";
+// ./features/store.js
 
-// Creating the store
+import { configureStore } from "@reduxjs/toolkit";
+import authReducer, { setUser, clearUser } from "./authSlice";
+import portfolioReducer from "./portfolioSlice";
+import { onAuthStateChangeListener } from "@/services/firestoreService"; // Correct import for Firebase auth listener
+
+// Create Redux store
 const store = configureStore({
   reducer: {
-    portfolio: portfolioReducer, // Adding the portfolio reducer to the store
     auth: authReducer,
+    portfolio: portfolioReducer,
   },
+});
+
+// Set up an authentication state listener using the service
+onAuthStateChangeListener((user) => {
+  if (user) {
+    // Extract only serializable parts of the user object
+    const userData = {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+    };
+    store.dispatch(setUser(userData));
+  } else {
+    store.dispatch(clearUser());
+  }
 });
 
 export default store;
