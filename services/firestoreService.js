@@ -58,10 +58,7 @@ export const savePortfolio = async (userId, portfolioData) => {
     // Ensure portfolioData.assets is never undefined
     const dataToSave = {
       assets: Array.isArray(portfolioData.assets) ? portfolioData.assets : [],
-      totalValue:
-        typeof portfolioData.totalValue === "number"
-          ? portfolioData.totalValue
-          : 0,
+      totalValue: portfolioData.totalValue || { usd: 0, eur: 0 }, // Update to include total value
     };
     console.log("Data being saved to Firestore:", dataToSave);
 
