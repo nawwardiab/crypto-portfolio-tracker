@@ -26,9 +26,10 @@ const Portfolio = () => {
 
       try {
         const portfolioData = await getPortfolio(user.uid);
+
         console.log("Fetched portfolio data:", portfolioData); // Log fetched data to verify
 
-        if (portfolioData) {
+        if (portfolioData && portfolioData.assets) {
           dispatch(setPortfolio(portfolioData));
         } else {
           dispatch(setPortfolio({ assets: [], totalValue: 0 }));
@@ -45,7 +46,6 @@ const Portfolio = () => {
   }, [user, getPortfolio, dispatch]);
 
   // Using useEffect to save portfolio when changes occur
-
   useEffect(() => {
     if (user && portfolio.assets.length > 0) {
       const savePortfolioToFirestore = async () => {
@@ -61,6 +61,7 @@ const Portfolio = () => {
     }
   }, [user, portfolio, savePortfolio]);
 
+  // Function to add a new asset (example for adding Bitcoin)
   const addDummyAsset = () => {
     if (!user) {
       console.error("Cannot add an asset without logging in.");
@@ -71,34 +72,10 @@ const Portfolio = () => {
       id: Date.now(),
       name: "Bitcoin",
       amount: 1,
-      value: 30000,
+      value: 30000, // Example value
     };
     dispatch(addCrypto(newAsset)); // Update the Redux state with the new asset
   };
-
-  /*
-  const handleSavePortfolio = async () => {
-    if (!user) {
-      console.error("No user is logged in.");
-      return;
-    }
-
-    // Fallbacks to prevent undefinded values from being saved
-    const portfolioToSave = {
-      assets: portfolio.assets || [], // Fallback to an empty array if assets is undefined
-      totalValue: portfolio.totalValue !== undefined ? portfolio.totalValue : 0, // Fallback to 0 if totalValue is undefined
-    };
-    console.log("Saving portfolio data for user:", user.uid);
-    console.log("Portfolio data to save:", portfolioToSave); // Log the portfolio data to inspect what is being saved
-
-    try {
-      await savePortfolio(user.uid, portfolioToSave);
-      console.log("Portfolio data saved!");
-    } catch (error) {
-      console.error("Error saving portfolio:", error);
-    }
-  };
-*/
 
   return (
     <div>
