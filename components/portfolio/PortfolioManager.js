@@ -51,11 +51,18 @@ const PortfolioManager = () => {
     }
   };
 
-  const calculateTotalValue = () => {
-    return portfolio.assets.reduce(
+  const calculateTotalValue = (portfolio) => {
+    const totalUSD = portfolio.assets.reduce(
       (total, asset) => total + asset.priceUSD * asset.amount,
       0
     );
+
+    const totalEUR = portfolio.assets.reduce(
+      (total, asset) => total + asset.priceEUR * asset.amount,
+      0
+    );
+
+    return { usd: totalUSD, eur: totalEUR };
   };
 
   const searchCoinBySymbol = debounce(async (symbol) => {
@@ -214,18 +221,40 @@ const PortfolioManager = () => {
   };
 
   const handleDeleteAsset = async () => {
+    if (assetToDelete === null || assetToDelete === undefined) {
+      console.error("No asset to delete is selected.");
+      return;
+    }
+
+    // Create updated assets after deletion
     const updatedAssets = portfolio.assets.filter(
       (_, i) => i !== assetToDelete
     );
 
+    // Recalculate total value for the updated assets
+    const updatedTotalValue = updatedAssets.reduce(
+      (total, asset) => ({
+        usd: total.usd + asset.priceUSD * asset.amount,
+        eur: total.eur + asset.priceEUR * asset.amount,
+      }),
+      { usd: 0, eur: 0 }
+    );
+
     try {
       setLoading(true);
+
+      // Dispatch the Redux action to remove the asset
       dispatch(removeCrypto(assetToDelete));
+
+      // Save the updated portfolio to Firestore
       await savePortfolio(user.uid, {
         assets: updatedAssets,
-        totalValue: calculateTotalValue(),
+        totalValue: updatedTotalValue,
       });
+
+      // Success message and state updates
       toast.success("Asset deleted successfully!");
+
       setOpenDeleteDialog(false);
       setAssetToDelete(null);
     } catch (error) {

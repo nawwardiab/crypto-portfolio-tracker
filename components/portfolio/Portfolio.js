@@ -15,7 +15,7 @@ const Portfolio = () => {
   const user = useSelector((state) => state.auth.user);
   const portfolio = useSelector((state) => state.portfolio) || {
     assets: [],
-    totalValue: 0,
+    totalValue: { usd: 0, eur: 0 },
   }; // Ensure default value
   const dispatch = useDispatch();
 

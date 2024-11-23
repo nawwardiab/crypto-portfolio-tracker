@@ -14,7 +14,6 @@ import {
 import { useSelector } from "react-redux";
 
 // Middleware for syncing portfolio with Firestore
-
 const portfolioMiddleware = (store) => (next) => (action) => {
   console.log("Middleware - Action dispatched:", action);
 
@@ -26,10 +25,16 @@ const portfolioMiddleware = (store) => (next) => (action) => {
 
     try {
       console.log("Middleware - Saving portfolio:", portfolio);
+
+      // Save portfolio to Firestore with correct structure for totalValue
       savePortfolio(state.auth.user.uid, {
         assets: portfolio.assets,
-        totalValue: portfolio.totalValue,
+        totalValue: {
+          usd: portfolio.totalValue.usd || 0,
+          eur: portfolio.totalValue.eur || 0,
+        },
       });
+
       console.log(
         "Portfolio saved to Firestore successfully after state update."
       );
