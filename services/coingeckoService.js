@@ -50,6 +50,7 @@ export const searchCoins = async (query) => {
         },
       }
     );
+    console.log("Response from CoinGecko search:", response);
     return response.data.coins;
   } catch (error) {
     console.error("Error searching coins:", error);

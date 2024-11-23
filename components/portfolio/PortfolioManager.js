@@ -1,26 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "@/features/authSlice";
 import { getPortfolio, savePortfolio } from "@/services/firestoreService";
-import {
-  getCryptoPrice,
-  getSupportedCoins,
-  searchCoins,
-} from "@/services/coingeckoService"; // Import the CoinGecko services
+import { getCryptoPrice, searchCoins } from "@/services/coingeckoService"; // Import the CoinGecko services
 import toast from "react-hot-toast";
 import debounce from "lodash.debounce";
-import Autocomplete from "@mui/material/Autocomplete";
-import TextField from "@mui/material/TextField";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import Button from "@mui/material/Button";
+// import Autocomplete from "@mui/material/Autocomplete";
+// import TextField from "@mui/material/TextField";
+// import Dialog from "@mui/material/Dialog";
+// import DialogActions from "@mui/material/DialogActions";
+// import DialogContent from "@mui/material/DialogContent";
+// import DialogContentText from "@mui/material/DialogContentText";
+// import DialogTitle from "@mui/material/DialogTitle";
+// import Button from "@mui/material/Button";
+
+import AddAssetForm from "./AddAssetForm";
+import PortfolioDetails from "./PortfolioDetails";
+import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
+import { addCrypto } from "@/features/portfolioSlice";
 
 const PortfolioManager = () => {
+  const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const [assets, setAssets] = useState([]);
   const [cryptoSymbol, setCryptoSymbol] = useState("");
@@ -28,6 +30,7 @@ const PortfolioManager = () => {
   const [loading, setLoading] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState(null);
+  const [suggestedSymbols, setSuggestedSymbols] = useState([]);
 
   // Fetch user's portfolio on component mount
   useEffect(() => {
@@ -40,7 +43,9 @@ const PortfolioManager = () => {
     try {
       setLoading(true);
       const portfolio = await getPortfolio(user.uid);
-      setAssets(portfolio.assets || []);
+      console.log("🚀 ~ loadPortfolio ~ user.uid:", user.uid);
+      setAssets(assets || []);
+      console.log("🚀 ~ loadPortfolio ~ portfolio:", assets);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching portfolio:", error);
@@ -49,28 +54,34 @@ const PortfolioManager = () => {
     }
   };
 
-  const searchCoinBySymbol = debounce(async () => {
+  const searchCoinBySymbol = debounce(async (symbol) => {
     try {
-      const matchingCoins = await searchCoins(cryptoSymbol);
+      const matchingCoins = await searchCoins(symbol);
       if (matchingCoins.length === 0) {
         toast.error("This cryptocurrency is not supported.");
+        setSuggestedSymbols([]);
         return null;
-      } else if (matchingCoins.length > 1) {
-        toast.error(
-          "Multiple coins found with this symbol. Please specify the exact coin."
+      } else {
+        // Store both the symbol and id for uniqueness
+        setSuggestedSymbols(
+          matchingCoins.map((coin) => ({
+            symbol: coin.symbol.toUpperCase(),
+            id: coin.id,
+          }))
         );
+
         console.log("🚀 ~ Matching Coins:", matchingCoins);
-        return null;
+        return matchingCoins.length === 1 ? matchingCoins[0] : null;
       }
-      return matchingCoins[0];
     } catch (error) {
       console.error("Error fetching coin by symbol:", error);
       toast.error("Failed to fetch coin. Please try again.");
+      setSuggestedSymbols([]);
       return null;
     }
-  }, 500); // Debounce the function to delay API calls by 500ms
+  }, 500);
 
-  const handleAddAsset = async () => {
+  const handleAddAsset = async (cryptoSymbol, amount) => {
     if (!cryptoSymbol.trim() || !amount) {
       toast.error(
         "Please enter both a valid cryptocurrency symbol and amount."
@@ -78,32 +89,91 @@ const PortfolioManager = () => {
       return;
     }
 
-    const coin = await searchCoinBySymbol();
-    if (!coin) return;
-
     try {
       setLoading(true);
-      // Fetch the current price from CoinGecko
-      const priceData = await getCryptoPrice(coin.id);
-      console.log("🚀 ~ handleAddAsset ~ priceData:", priceData);
-      if (!priceData || !priceData.usd || !priceData.eur) {
-        throw new Error("Invalid cryptocurrency symbol");
+      console.log("Searching for coin symbol:", cryptoSymbol);
+
+      // Search for the coin based on the input symbol
+      const matchingCoins = await searchCoins(cryptoSymbol);
+      console.log("🚀 ~ handleAddAsset ~ matchingCoins:", matchingCoins);
+
+      if (matchingCoins.length === 0) {
+        toast.error("This cryptocurrency is not supported.");
+        setLoading(false);
+        return;
+      } else if (matchingCoins.length > 1) {
+        // Automatically pick the first coin if multiple matches are found
+        console.warn(
+          "Multiple coins found, selecting the first one by default."
+        );
+        const coin = matchingCoins[0];
+        console.log("Selected coin:", coin);
+
+        // Continue to price fetching and saving logic
+        const priceData = await getCryptoPrice(coin.id);
+        console.log("Price data:", priceData);
+
+        if (!priceData || !priceData.usd || !priceData.eur) {
+          throw new Error("Invalid cryptocurrency symbol");
+        }
+
+        // Creating the new asset object
+        const newAsset = {
+          symbol: cryptoSymbol.trim().toUpperCase(),
+          amount: parseFloat(amount),
+          priceUSD: parseFloat(priceData.usd),
+          priceEUR: parseFloat(priceData.eur),
+        };
+
+        console.log("New asset being added:", newAsset);
+
+        // Updating assets and saving to Firestore
+        const updatedAssets = [...assets, newAsset];
+        console.log("Assets before saving to Firestore:", updatedAssets);
+
+        await savePortfolio(user.uid, { assets: updatedAssets });
+        console.log("Portfolio saved successfully!");
+
+        // Update the component state with the new asset
+        setAssets(updatedAssets);
+        setCryptoSymbol("");
+        setAmount("");
+        toast.success("Asset added successfully!");
+      } else {
+        // If there's only one match
+        const coin = matchingCoins[0];
+        console.log("Matched coin:", coin);
+
+        const priceData = await getCryptoPrice(coin.id);
+        console.log("Price data:", priceData);
+
+        if (!priceData || !priceData.usd || !priceData.eur) {
+          throw new Error("Invalid cryptocurrency symbol");
+        }
+
+        // Creating the new asset object
+        const newAsset = {
+          symbol: cryptoSymbol.trim().toUpperCase(),
+          amount: parseFloat(amount),
+          priceUSD: parseFloat(priceData.usd),
+          priceEUR: parseFloat(priceData.eur),
+        };
+
+        console.log("New asset being added:", newAsset);
+
+        // Updating assets and saving to Firestore
+        const updatedAssets = [...assets, newAsset];
+        console.log("Assets before saving to Firestore:", updatedAssets);
+
+        await savePortfolio(user.uid, { assets: updatedAssets });
+        console.log("Portfolio saved successfully!");
+
+        // Update the component state with the new asset
+        setAssets(updatedAssets);
+        setCryptoSymbol("");
+        setAmount("");
+        toast.success("Asset added successfully!");
       }
-
-      const newAsset = {
-        symbol: cryptoSymbol.trim().toUpperCase(), // Trim and convert to uppercase
-        amount: parseFloat(amount),
-        priceUSD: parseFloat(priceData.usd),
-        priceEUR: parseFloat(priceData.eur),
-      };
-
-      console.log("New asset being added:", newAsset);
-
-      await savePortfolio(user.uid, { assets: [...assets, newAsset] });
-      setAssets((prev) => [...prev, newAsset]);
-      setCryptoSymbol("");
-      setAmount("");
-      toast.success("Asset added successfully!");
     } catch (error) {
       console.error("Error adding asset:", error);
       toast.error("Failed to add asset. Please try again.");
@@ -164,7 +234,7 @@ const PortfolioManager = () => {
   return (
     <div style={styles.container}>
       {/* Add Asset Form */}
-      <div style={styles.form}>
+      {/* <div style={styles.form}>
         <h2 style={styles.header}>Add Cryptocurrency</h2>
         <Autocomplete
           freeSolo
@@ -199,72 +269,28 @@ const PortfolioManager = () => {
           disabled={loading}
         >
           {loading ? "Adding..." : "Add Asset"}
-        </button>
-      </div>
-
-      {/* Portfolio Details */}
-      <div style={styles.assets}>
-        <h2 style={styles.header}>Portfolio Details</h2>
-        {loading ? (
-          <p>Loading portfolio...</p>
-        ) : assets.length > 0 ? (
-          assets.map((asset, index) => (
-            <div key={index} style={styles.asset}>
-              <p>
-                {`${asset.symbol} - Amount: ${asset.amount} - Value (USD): $${
-                  isNaN(asset.amount * asset.priceUSD)
-                    ? 0
-                    : (asset.amount * asset.priceUSD).toFixed(2)
-                } - Value (EUR): €${
-                  isNaN(asset.amount * asset.priceEUR)
-                    ? 0
-                    : (asset.amount * asset.priceEUR).toFixed(2)
-                }`}
-              </p>
-              <button
-                onClick={() => handleEditAsset(index)}
-                style={{ ...styles.assetButton, marginLeft: "10px" }}
-              >
-                Edit
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevents any other actions from triggering
-                  e.preventDefault(); // Prevent the default action (such as page reload)
-                  openDeleteConfirmation(index);
-                }}
-                style={{
-                  ...styles.assetButton,
-                  marginLeft: "5px",
-                  background: "#dc3545",
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          ))
-        ) : (
-          <p>No assets in your portfolio yet.</p>
-        )}
-      </div>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={openDeleteDialog} onClose={closeDeleteConfirmation}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this asset from your portfolio?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeDeleteConfirmation} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteAsset} color="secondary">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </button>*/}
+      <AddAssetForm
+        cryptoSymbol={cryptoSymbol}
+        setCryptoSymbol={setCryptoSymbol}
+        amount={amount}
+        setAmount={setAmount}
+        addAsset={handleAddAsset}
+        loading={loading}
+        suggestedSymbols={suggestedSymbols}
+        searchCoinBySymbol={searchCoinBySymbol}
+      />
+      <PortfolioDetails
+        assets={assets}
+        loading={loading}
+        handleEditAsset={handleEditAsset}
+        openDeleteConfirmation={openDeleteConfirmation}
+      />
+      <DeleteConfirmationDialog
+        open={openDeleteDialog}
+        onClose={closeDeleteConfirmation}
+        onDelete={handleDeleteAsset}
+      />
     </div>
   );
 };

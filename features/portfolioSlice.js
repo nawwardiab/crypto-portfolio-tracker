@@ -1,27 +1,28 @@
+// portfolioSlice.js
+
 import { createSlice } from "@reduxjs/toolkit";
 
-// Initial state of the portfolio (It's empty to start with)
 const initialState = {
   assets: [],
   totalValue: 0,
 };
 
-// Creating a slice for managing portfolio data
 const portfolioSlice = createSlice({
   name: "portfolio",
   initialState,
   reducers: {
     setPortfolio: (state, action) => {
+      console.log("setPortfolio called with payload:", action.payload);
       state.assets = action.payload.assets;
       state.totalValue = action.payload.totalValue;
     },
     addCrypto: (state, action) => {
-      // Adding a new crypto asset to the portfolio
+      console.log("addCrypto called with payload:", action.payload);
       state.assets.push(action.payload);
       state.totalValue += action.payload.value;
     },
     removeCrypto: (state, action) => {
-      // Removing a crypto asset from the portfolio by its ID
+      console.log("removeCrypto called with payload:", action.payload);
       state.assets = state.assets.filter(
         (asset) => asset.id !== action.payload
       );
@@ -31,6 +32,7 @@ const portfolioSlice = createSlice({
         (asset) => asset.id === action.payload.id
       );
       if (index !== -1) {
+        console.log("updateCrypto called with payload:", action.payload);
         state.assets[index] = {
           ...state.assets[index],
           ...action.payload.updateAsset,
@@ -40,9 +42,7 @@ const portfolioSlice = createSlice({
   },
 });
 
-// Exporting the actions to be used in the components
 export const { setPortfolio, addCrypto, removeCrypto, updateCrypto } =
   portfolioSlice.actions;
 
-// Exporting the reducer to be used by the store
 export default portfolioSlice.reducer;

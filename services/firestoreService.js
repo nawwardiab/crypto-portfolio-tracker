@@ -33,7 +33,7 @@ export const getPortfolio = async (userId) => {
       const fetchedData = portfolioDoc.data();
       console.log("Portfolio data fetched successfully:", portfolioDoc.data()); // Log fetched data
       return {
-        assets: fetchedData.portfolio || [],
+        assets: fetchedData.assets || [],
         totalValue: fetchedData.totalValue || 0,
       };
     } else {
@@ -47,17 +47,23 @@ export const getPortfolio = async (userId) => {
 };
 
 export const savePortfolio = async (userId, portfolioData) => {
-  if (!db) return;
+  if (!db) {
+    console.error("Firestore database instance is not initialized");
+    return;
+  }
   try {
     console.log("Attempting to save portfolio to Firestore for user:", userId);
     console.log("Portfolio data to be saved:", portfolioData); // Log data being saved
 
     // Ensure portfolioData.assets is never undefined
     const dataToSave = {
-      portfolio: portfolioData.assets || [], // Fallback to an empty array if undefined
+      assets: Array.isArray(portfolioData.assets) ? portfolioData.assets : [],
       totalValue:
-        portfolioData.totalValue !== undefined ? portfolioData.totalValue : 0, // Fallback to 0 if undefined
+        typeof portfolioData.totalValue === "number"
+          ? portfolioData.totalValue
+          : 0,
     };
+    console.log("Data being saved to Firestore:", dataToSave);
 
     await setDoc(doc(db, "portfolios", userId), dataToSave, { merge: true });
 
@@ -67,6 +73,20 @@ export const savePortfolio = async (userId, portfolioData) => {
     throw error;
   }
 };
+// const testSavePortfolio = async () => {
+//   try {
+//     const testUserId = "testUserId";
+//     const testPortfolioData = {
+//       assets: [{ symbol: "BTC", amount: 1 }],
+//       totalValue: 50000,
+//     };
+//     await savePortfolio(testUserId, testPortfolioData);
+//     console.log("Test save successful");
+//   } catch (error) {
+//     console.error("Test save failed:", error);
+//   }
+// };
+// testSavePortfolio();
 
 // Firebase Auth Operations
 export const createUser = async (email, password) => {
