@@ -70,6 +70,7 @@ const PortfolioManager = () => {
     }
   };
 
+
   const searchCoinBySymbol = debounce(async (symbol) => {
     if (!symbol.trim()) {
       setSuggestedSymbols([]);
@@ -260,22 +261,10 @@ const PortfolioManager = () => {
       return;
     }
 
-    // const updatedAssets = portfolio.assets.filter(
-    //   (_, i) => i !== assetToDelete
-    // );
-
-    // let totalValueUSD = 0;
-    // let totalValueEUR = 0;
-
-    // updatedAssets.forEach((asset) => {
-    //   totalValueUSD += asset.priceUSD * asset.amount;
-    //   totalValueEUR += asset.priceEUR * asset.amount;
-    // });
-
-    // Create updated assets array after deletion
     const updatedAssets = portfolio.assets.filter(
       (_, i) => i !== assetToDelete
     );
+
 
     const totalValueUSD = updatedAssets.reduce(
       (acc, asset) => acc + asset.amount * asset.priceUSD,
@@ -291,14 +280,18 @@ const PortfolioManager = () => {
       eur: parseFloat(totalValueEUR.toFixed(2)),
     };
 
+
     try {
       setLoading(true);
+
+
 
       // Save the updated portfolio to Firestore
       await savePortfolio(user.uid, {
         assets: updatedAssets,
         totalValue: updatedTotalValue,
       });
+
 
       // Dispatch Redux action to update the store
       // dispatch(removeCrypto(assetToDelete));
@@ -311,7 +304,9 @@ const PortfolioManager = () => {
         setPortfolio({ assets: updatedAssets, totalValue: updatedTotalValue })
       );
 
+
       toast.success("Asset deleted successfully!");
+
       setOpenDeleteDialog(false);
       setAssetToDelete(null);
     } catch (error) {

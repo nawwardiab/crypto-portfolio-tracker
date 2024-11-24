@@ -34,11 +34,11 @@ export const getPortfolio = async (userId) => {
       console.log("Portfolio data fetched successfully:", portfolioDoc.data()); // Log fetched data
       return {
         assets: fetchedData.assets || [],
-        totalValue: fetchedData.totalValue || 0,
+        totalValue: fetchedData.totalValue || { usd: 0, eur: 0 },
       };
     } else {
       console.warn("No portfolio found for user:", userId);
-      return { assets: [], totalValue: 0 };
+      return { assets: [], totalValue: { usd: 0, eur: 0 } };
     }
   } catch (error) {
     console.error("Error fetching portfolio:", error.message);
@@ -55,10 +55,16 @@ export const savePortfolio = async (userId, portfolioData) => {
     console.log("Attempting to save portfolio to Firestore for user:", userId);
     console.log("Portfolio data to be saved:", portfolioData); // Log data being saved
 
+    // Ensure portfolioData.assets is never undefined, and totalValue has both usd and eur
+    const totalValue = portfolioData.totalValue || { usd: 0, eur: 0 };
+
     // Ensure portfolioData.assets is never undefined
     const dataToSave = {
       assets: Array.isArray(portfolioData.assets) ? portfolioData.assets : [],
-      totalValue: portfolioData.totalValue || { usd: 0, eur: 0 }, // Update to include total value
+      totalValue: {
+        usd: totalValue.usd ? parseFloat(totalValue.usd.toFixed(2)) : 0,
+        eur: totalValue.eur ? parseFloat(totalValue.eur.toFixed(2)) : 0,
+      }, // Update to include total value
     };
     console.log("Data being saved to Firestore:", dataToSave);
 

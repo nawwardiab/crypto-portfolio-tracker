@@ -15,6 +15,7 @@ import { useSelector } from "react-redux";
 
 // Middleware for syncing portfolio with Firestore
 
+
 // const portfolioMiddleware = (store) => (next) => (action) => {
 //   console.log("Middleware - Action dispatched:", action);
 
@@ -23,6 +24,7 @@ import { useSelector } from "react-redux";
 //   if (action.type.startsWith("portfolio/")) {
 //     const state = store.getState();
 //     const portfolio = state.portfolio;
+
 
 //     try {
 //       console.log("Middleware - Saving portfolio:", portfolio);
@@ -37,6 +39,7 @@ import { useSelector } from "react-redux";
 //       console.error("Error saving portfolio after state update:", error);
 //     }
 //   }
+
 
 //   return result;
 // };
