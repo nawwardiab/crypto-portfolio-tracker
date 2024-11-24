@@ -1,7 +1,7 @@
 // PortfolioManager.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "@/features/authSlice";
 import { getPortfolio, savePortfolio } from "@/services/firestoreService";
@@ -18,6 +18,7 @@ import {
   removeCrypto,
   updateCrypto,
 } from "@/features/portfolioSlice";
+import PortfolioChart from "./PortfolioChart";
 
 const PortfolioManager = () => {
   const dispatch = useDispatch();
@@ -41,6 +42,24 @@ const PortfolioManager = () => {
     try {
       setLoading(true);
       const portfolio = await getPortfolio(user.uid);
+      console.log("=== LOADED PORTFOLIO ===");
+      console.log("Fetched Assets:", portfolio.assets);
+      console.log("Fetched Total Value:", portfolio.totalValue);
+      // Handle totalValue properly
+      if (portfolio.totalValue && typeof portfolio.totalValue === "object") {
+        portfolio.totalValue = {
+          usd: parseFloat(portfolio.totalValue.usd || 0),
+          eur: parseFloat(portfolio.totalValue.eur || 0),
+        };
+      } else {
+        portfolio.totalValue = {
+          usd: 0,
+          eur: 0,
+        };
+      }
+
+      console.log("Processed Total Value:", portfolio.totalValue);
+
       console.log("🚀 ~ loadPortfolio ~ user.uid:", user.uid);
       dispatch(setPortfolio(portfolio));
       setLoading(false);
@@ -51,19 +70,6 @@ const PortfolioManager = () => {
     }
   };
 
-  const calculateTotalValue = (portfolio) => {
-    const totalUSD = portfolio.assets.reduce(
-      (total, asset) => total + asset.priceUSD * asset.amount,
-      0
-    );
-
-    const totalEUR = portfolio.assets.reduce(
-      (total, asset) => total + asset.priceEUR * asset.amount,
-      0
-    );
-
-    return { usd: totalUSD, eur: totalEUR };
-  };
 
   const searchCoinBySymbol = debounce(async (symbol) => {
     if (!symbol.trim()) {
@@ -110,28 +116,18 @@ const PortfolioManager = () => {
 
     try {
       setLoading(true);
-      console.log("🚀 ~ Searching for coin symbol:", cryptoSymbol);
 
       // Search for the coin based on the input symbol
       const matchingCoins = await searchCoins(cryptoSymbol.trim());
-      console.log("🚀 ~ handleAddAsset ~ matchingCoins:", matchingCoins);
 
       if (!matchingCoins || matchingCoins.length === 0) {
         toast.error("This cryptocurrency is not supported.");
         setLoading(false);
         return;
-      } else if (matchingCoins.length > 1) {
-        // Let user pick the correct coin if multiple matches are found
-        console.warn(
-          "Multiple coins found, selecting the first one by default."
-        );
       }
 
       const coin = matchingCoins[0];
-      console.log("🚀 ~ handleAddAsset ~ Selected coin:", coin);
-
       const priceData = await getCryptoPrice(coin.id);
-      console.log("🚀 ~ handleAddAsset ~ Price data:", priceData);
 
       if (!priceData || !priceData.usd || !priceData.eur) {
         throw new Error(
@@ -147,14 +143,16 @@ const PortfolioManager = () => {
         priceEUR: parseFloat(priceData.eur),
       };
 
-      console.log("🚀 ~ handleAddAsset ~ New asset being added:", newAsset);
-
-      // Update assets and save to Firestore
+      // Update assets and calculate total value
       const updatedAssets = [...portfolio.assets, newAsset];
-      console.log(
-        "🚀 ~ handleAddAsset ~ Assets before saving to Firestore:",
-        updatedAssets
-      );
+      // let totalValueUSD = 0;
+      // let totalValueEUR = 0;
+
+      // updatedAssets.forEach((asset) => {
+      //   totalValueUSD += asset.priceUSD * asset.amount;
+      //   totalValueEUR += asset.priceEUR * asset.amount;
+      // });
+      // Calculate new total value
       const totalValueUSD = updatedAssets.reduce(
         (acc, asset) => acc + asset.amount * asset.priceUSD,
         0
@@ -163,22 +161,23 @@ const PortfolioManager = () => {
         (acc, asset) => acc + asset.amount * asset.priceEUR,
         0
       );
+      const updatedTotalValue = {
+        usd: parseFloat(totalValueUSD.toFixed(2)),
+        eur: parseFloat(totalValueEUR.toFixed(2)),
+      };
 
-      console.log("Total Value USD:", totalValueUSD);
-      console.log("Total Value EUR:", totalValueEUR);
+      // Check the computed total value before saving
+      console.log("Total Value USD:", updatedTotalValue.usd);
+      console.log("Total Value EUR:", updatedTotalValue.eur);
 
+      // Save to Firestore
       await savePortfolio(user.uid, {
         assets: updatedAssets,
-        totalValue: {
-          usd: totalValueUSD,
-          eur: totalValueEUR,
-        },
+        totalValue: updatedTotalValue,
       });
-      console.log("🚀 ~ handleAddAsset ~ Portfolio saved successfully!");
 
-      // Update the Redux store with the new asset
+      // Update Redux state
       dispatch(addCrypto(newAsset));
-
       setCryptoSymbol("");
       setAmount("");
       toast.success("Asset added successfully!");
@@ -195,22 +194,58 @@ const PortfolioManager = () => {
       "Enter new amount:",
       portfolio.assets[index].amount
     );
-    if (newAmount === null || newAmount === "") return;
+    if (newAmount === null || newAmount === "" || isNaN(newAmount)) return;
 
+    // Create a new updated asset
     const updatedAsset = {
       ...portfolio.assets[index],
       amount: parseFloat(newAmount),
     };
-    const updatedAssets = [...portfolio.assets];
-    updatedAssets[index] = updatedAsset;
+
+    // Create a new array for updated assets
+    const updatedAssets = portfolio.assets.map((asset, i) =>
+      i === index ? updatedAsset : asset
+    );
+    // Calculate the updated total value
+    const totalValueUSD = updatedAssets.reduce(
+      (acc, asset) => acc + asset.amount * asset.priceUSD,
+      0
+    );
+    const totalValueEUR = updatedAssets.reduce(
+      (acc, asset) => acc + asset.amount * asset.priceEUR,
+      0
+    );
+
+    // let totalValueUSD = 0;
+    // let totalValueEUR = 0;
+
+    // updatedAssets.forEach((asset) => {
+    //   totalValueUSD += asset.priceUSD * asset.amount;
+    //   totalValueEUR += asset.priceEUR * asset.amount;
+    // });
+
+    const updatedTotalValue = {
+      usd: parseFloat(totalValueUSD.toFixed(2)),
+      eur: parseFloat(totalValueEUR.toFixed(2)),
+    };
 
     try {
       setLoading(true);
-      dispatch(updateCrypto({ id: portfolio.assets[index].id, updatedAsset }));
+
+      // Save to Firestore
       await savePortfolio(user.uid, {
         assets: updatedAssets,
-        totalValue: calculateTotalValue(),
+        totalValue: updatedTotalValue,
       });
+
+      // Dispatch the update to Redux to update the specific asset
+      dispatch(updateCrypto({ id: portfolio.assets[index].id, updatedAsset }));
+
+      // Ensure Redux store is fully in sync with Firestore
+      dispatch(
+        setPortfolio({ assets: updatedAssets, totalValue: updatedTotalValue })
+      );
+
       toast.success("Asset updated successfully!");
     } catch (error) {
       console.error("Error updating asset:", error);
@@ -226,25 +261,30 @@ const PortfolioManager = () => {
       return;
     }
 
-    // Create updated assets after deletion
     const updatedAssets = portfolio.assets.filter(
       (_, i) => i !== assetToDelete
     );
 
-    // Recalculate total value for the updated assets
-    const updatedTotalValue = updatedAssets.reduce(
-      (total, asset) => ({
-        usd: total.usd + asset.priceUSD * asset.amount,
-        eur: total.eur + asset.priceEUR * asset.amount,
-      }),
-      { usd: 0, eur: 0 }
+
+    const totalValueUSD = updatedAssets.reduce(
+      (acc, asset) => acc + asset.amount * asset.priceUSD,
+      0
     );
+    const totalValueEUR = updatedAssets.reduce(
+      (acc, asset) => acc + asset.amount * asset.priceEUR,
+      0
+    );
+
+    const updatedTotalValue = {
+      usd: parseFloat(totalValueUSD.toFixed(2)),
+      eur: parseFloat(totalValueEUR.toFixed(2)),
+    };
+
 
     try {
       setLoading(true);
 
-      // Dispatch the Redux action to remove the asset
-      dispatch(removeCrypto(assetToDelete));
+
 
       // Save the updated portfolio to Firestore
       await savePortfolio(user.uid, {
@@ -252,7 +292,19 @@ const PortfolioManager = () => {
         totalValue: updatedTotalValue,
       });
 
-      // Success message and state updates
+
+      // Dispatch Redux action to update the store
+      // dispatch(removeCrypto(assetToDelete));
+
+      // Dispatch the removal to Redux to update the specific asset
+      dispatch(removeCrypto(portfolio.assets[assetToDelete].id));
+
+      // Ensure Redux store is fully in sync with Firestore
+      dispatch(
+        setPortfolio({ assets: updatedAssets, totalValue: updatedTotalValue })
+      );
+
+
       toast.success("Asset deleted successfully!");
 
       setOpenDeleteDialog(false);
@@ -277,6 +329,7 @@ const PortfolioManager = () => {
 
   return (
     <div style={styles.container}>
+      <PortfolioChart />
       <AddAssetForm
         cryptoSymbol={cryptoSymbol}
         setCryptoSymbol={setCryptoSymbol}

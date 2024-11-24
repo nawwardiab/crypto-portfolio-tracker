@@ -18,14 +18,16 @@ const portfolioSlice = createSlice({
     },
     addCrypto: (state, action) => {
       console.log("addCrypto called with payload:", action.payload);
-      const { symbol, amount, priceUSD, priceEUR } = action.payload;
 
-      // Adding the new crypto asset
-      state.assets.push({ symbol, amount, priceUSD, priceEUR });
+      state.assets.push(action.payload);
+      // Update totalValue accurately after adding a new asset
+      state.totalValue.usd += parseFloat(
+        action.payload.priceUSD * action.payload.amount
+      ).toFixed(2);
+      state.totalValue.eur += parseFloat(
+        action.payload.priceEUR * action.payload.amount
+      ).toFixed(2);
 
-      // Updating total portfolio value for USD and EUR
-      state.totalValue.usd += priceUSD * amount;
-      state.totalValue.eur += priceEUR * amount;
     },
     removeCrypto: (state, action) => {
       console.log("removeCrypto called with payload:", action.payload);
@@ -35,16 +37,17 @@ const portfolioSlice = createSlice({
         (asset) => asset.symbol === action.payload
       );
 
-      if (assetToRemove) {
-        // Subtract the value of the removed asset from the totalValue
-        state.totalValue.usd -= assetToRemove.priceUSD * assetToRemove.amount;
-        state.totalValue.eur -= assetToRemove.priceEUR * assetToRemove.amount;
+      // Recalculate totalValue
+      const updatedTotalValue = state.assets.reduce(
+        (total, asset) => {
+          total.usd += asset.priceUSD * asset.amount;
+          total.eur += asset.priceEUR * asset.amount;
+          return total;
+        },
+        { usd: 0, eur: 0 }
+      );
+      state.totalValue = updatedTotalValue;
 
-        // Remove the asset from the assets array
-        state.assets = state.assets.filter(
-          (asset) => asset.symbol !== action.payload
-        );
-      }
     },
     updateCrypto: (state, action) => {
       const { id, updateAsset } = action.payload;
@@ -66,9 +69,18 @@ const portfolioSlice = createSlice({
           ...updateAsset,
         };
 
-        // Update total value with the new amounts
-        state.totalValue.usd += oldAsset.priceUSD * newAmount;
-        state.totalValue.eur += oldAsset.priceEUR * newAmount;
+
+        // Recalculate totalValue
+        const updatedTotalValue = state.assets.reduce(
+          (total, asset) => {
+            total.usd += asset.priceUSD * asset.amount;
+            total.eur += asset.priceEUR * asset.amount;
+            return total;
+          },
+          { usd: 0, eur: 0 }
+        );
+        state.totalValue = updatedTotalValue;
+
       }
     },
   },
