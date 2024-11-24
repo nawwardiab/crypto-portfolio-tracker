@@ -44,30 +44,32 @@ const Navbar = () => {
             >
               Portfolio
             </Link>
+          </>
+        )}
+      </div>
+      <div>
+        {user && (
+          <>
             <Link
               href="/profile"
               style={{ color: "white", marginRight: "1rem" }}
             >
               Profile
             </Link>
+            <button
+              onClick={handleSignOut}
+              style={{
+                padding: "0.5rem 1rem",
+                background: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Sign Out
+            </button>
           </>
-        )}
-      </div>
-      <div>
-        {user && (
-          <button
-            onClick={handleSignOut}
-            style={{
-              padding: "0.5rem 1rem",
-              background: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Sign Out
-          </button>
         )}
       </div>
     </nav>
