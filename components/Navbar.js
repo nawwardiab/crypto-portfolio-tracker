@@ -1,3 +1,5 @@
+// components/Navbar.js
+
 "use client";
 
 import Link from "next/link";
@@ -6,11 +8,23 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/services/firestoreService";
 import { clearUser, selectUser } from "@/features/authSlice";
 import { useRouter } from "next/navigation";
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Typography,
+  Box,
+  IconButton,
+} from "@mui/material";
+import { useTheme } from "./theme/ThemeContext";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 
 const Navbar = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const user = useSelector(selectUser);
+  const { theme, toggleTheme } = useTheme();
 
   // Function to handle sign out
   const handleSignOut = async () => {
@@ -24,55 +38,54 @@ const Navbar = () => {
   };
 
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "1rem",
-        background: "#333333",
-      }}
-    >
-      <div>
-        <Link href="/" style={{ color: "white", marginRight: "1rem" }}>
-          Home
-        </Link>
+    <AppBar position="static">
+      <Toolbar>
+        <Typography variant="h6" sx={{ flexGrow: 1, color: "primary.main" }}>
+          <Link href="/" style={{ color: "inherit", textDecoration: "none" }}>
+            Home
+          </Link>
+        </Typography>
         {user && (
           <>
-            <Link
-              href="/portfolio"
-              style={{ color: "white", marginRight: "1rem" }}
-            >
-              Portfolio
-            </Link>
+            <Typography variant="h6" sx={{ marginRight: 2 }}>
+              <Link
+                href="/portfolio"
+                style={{ color: "inherit", textDecoration: "none" }}
+              >
+                Portfolio
+              </Link>
+            </Typography>
           </>
         )}
-      </div>
-      <div>
-        {user && (
-          <>
-            <Link
-              href="/profile"
-              style={{ color: "white", marginRight: "1rem" }}
-            >
-              Profile
-            </Link>
-            <button
-              onClick={handleSignOut}
-              style={{
-                padding: "0.5rem 1rem",
-                background: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Sign Out
-            </button>
-          </>
-        )}
-      </div>
-    </nav>
+        <Box>
+          <IconButton onClick={toggleTheme} color="inherit">
+            {theme === "light" ? <Brightness4Icon /> : <Brightness7Icon />}
+          </IconButton>
+          {user && (
+            <>
+              <Link
+                href="/profile"
+                style={{
+                  color: "inherit",
+                  textDecoration: "none",
+                  marginRight: "1rem",
+                }}
+              >
+                <Button color="inherit">Profile</Button>
+              </Link>
+              <Button
+                onClick={handleSignOut}
+                color="secondary"
+                variant="contained"
+                sx={{ ml: 2 }}
+              >
+                Sign Out
+              </Button>
+            </>
+          )}
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };
 

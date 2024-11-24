@@ -1,25 +1,58 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* global.css or your main CSS file */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-color: #007bff; /* Placeholder blue; will update this to gold */
+  --secondary-color: #28a745; /* Placeholder green; update for consistency */
+  --accent-color: #d4af37; /* Gold for accents */
+  --background-color-light: #ffffff;
+  --background-color-dark: #222222;
+  --text-color-light: #333333;
+  --text-color-dark: #f0f0f0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme="light"] {
+  --primary-color: #d4af37; /* Gold accent for light mode */
+  --secondary-color: #333333; /* Dark text color for contrast */
+  --background-color: var(--background-color-light);
+  --text-color: var(--text-color-light);
+}
+
+[data-theme="dark"] {
+  --primary-color: #d4af37; /* Gold accent for dark mode */
+  --secondary-color: #f0f0f0; /* Light text for contrast */
+  --background-color: var(--background-color-dark);
+  --text-color: var(--text-color-dark);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-input {
-  color: var(--background);
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--secondary-color);
+}
+
+input,
+select,
+textarea {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  border: 1px solid var(--primary-color);
+  padding: 10px;
+  border-radius: 4px;
 }
