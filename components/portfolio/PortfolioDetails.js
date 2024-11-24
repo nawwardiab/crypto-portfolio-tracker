@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@mui/material";
 import AssetTrendChart from "./AssetTrendChart";
 import { getCoinsList } from "@/services/coingeckoService";
+import { useTheme } from "../theme/ThemeContext";
 
 const PortfolioDetails = ({
   assets,
@@ -13,6 +14,7 @@ const PortfolioDetails = ({
 }) => {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [coinsList, setCoinsList] = useState([]);
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Fetch the list of coins from CoinGecko
@@ -36,6 +38,12 @@ const PortfolioDetails = ({
     );
     return coin ? coin.id : null;
   };
+  // const getCoinIdFromSymbol = (symbol) => {
+  //   return (
+  //     coinsList.find((c) => c.symbol.toLowerCase() === symbol.toLowerCase())
+  //       ?.id || null
+  //   );
+  // };
 
   const handleViewTrend = (asset) => {
     setSelectedAsset((prevSelected) =>
@@ -43,11 +51,14 @@ const PortfolioDetails = ({
     );
   };
 
-  console.log("PortfolioDetails received assets:", assets); // Debugging log
-
   return (
     <div
-      style={{ backgroundColor: "#444", padding: "1rem", borderRadius: "8px" }}
+      style={{
+        backgroundColor: theme === "dark" ? "#444" : "#f0f0f0",
+        color: theme === "dark" ? "#fff" : "#000",
+        padding: "1rem",
+        borderRadius: "8px",
+      }}
     >
       <h2 style={{ marginBottom: "1rem" }}>Portfolio Details</h2>
       {loading ? (
@@ -65,7 +76,7 @@ const PortfolioDetails = ({
                 style={{
                   marginBottom: "1rem",
                   padding: "0.5rem",
-                  backgroundColor: "#555",
+                  backgroundColor: theme === "dark" ? "#555" : "#e0e0e0",
                   borderRadius: "4px",
                 }}
               >
@@ -82,7 +93,11 @@ const PortfolioDetails = ({
                 </p>
                 <Button
                   onClick={() => handleEditAsset(index)}
-                  style={{ marginLeft: "10px" }}
+                  style={{
+                    marginLeft: "10px",
+                    background: theme === "dark" ? "#007bff" : "#0056b3",
+                    color: "white",
+                  }}
                 >
                   Edit
                 </Button>
@@ -101,7 +116,11 @@ const PortfolioDetails = ({
                 {coinId ? (
                   <Button
                     onClick={() => handleViewTrend(asset)}
-                    style={{ marginLeft: "10px", background: "#28a745" }}
+                    style={{
+                      marginLeft: "10px",
+                      background: theme === "dark" ? "#28a745" : "#218838",
+                      color: "white",
+                    }}
                     variant="contained"
                     color="primary"
                   >

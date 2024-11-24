@@ -1,5 +1,5 @@
-// components/AddAssetForm.js
-import { TextField, Button, Autocomplete } from "@mui/material";
+import { TextField, Button, Autocomplete, Box } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 const AddAssetForm = ({
   cryptoSymbol,
@@ -11,72 +11,87 @@ const AddAssetForm = ({
   suggestedSymbols,
   searchCoinBySymbol,
 }) => {
+  // Use theme from MUI
+  const theme = useTheme();
+
   const handleAdd = () => {
-    console.log("Add button clicked", { cryptoSymbol, amount }); // Debugging log
     if (!cryptoSymbol.trim() || !amount) {
       alert("Please enter a valid cryptocurrency symbol and amount.");
       return;
     }
-    // Call the function to add the asset with the current symbol and amount
     addAsset(cryptoSymbol, amount);
   };
 
   return (
-    <div
-      style={{
-        marginBottom: "2rem",
-        backgroundColor: "#333",
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "1rem",
+        backgroundColor:
+          theme.palette.mode === "dark"
+            ? theme.palette.background.paper
+            : theme.palette.grey[100], // Using MUI's grey color for light mode background
         padding: "1rem",
         borderRadius: "8px",
-        textAlign: "center",
+        color: theme.palette.text.primary,
+      }}
+      component="form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleAdd();
       }}
     >
-      <h2 style={{ marginBottom: "1rem" }}>Add Cryptocurrency</h2>
       <Autocomplete
-        freeSolo
         options={suggestedSymbols}
-        getOptionLabel={(option) => option.symbol}
-        inputValue={cryptoSymbol}
-        onInputChange={(event, newInputValue) => {
-          setCryptoSymbol(newInputValue);
-          searchCoinBySymbol(newInputValue); // Trigger search on input change with new value
-        }}
+        getOptionLabel={(option) => (option.symbol ? option.symbol : "")}
         renderInput={(params) => (
           <TextField
             {...params}
             label="Crypto Symbol (e.g., BTC)"
             variant="outlined"
-            fullWidth
-            style={{ marginBottom: "10px" }}
-            disabled={loading}
+            onChange={(e) => searchCoinBySymbol(e.target.value)}
+            sx={{
+              backgroundColor: theme.palette.background.default,
+              borderRadius: "4px",
+            }}
           />
         )}
-        renderOption={(props, option) => (
-          <li {...props} key={option.id}>
-            {option.symbol}
-          </li>
-        )}
+        value={cryptoSymbol}
+        onChange={(_, newValue) =>
+          setCryptoSymbol(newValue ? newValue.symbol : "")
+        }
       />
       <TextField
-        type="number"
         label="Amount"
+        type="number"
         variant="outlined"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        fullWidth
-        style={{ marginBottom: "10px" }}
-        disabled={loading}
+        sx={{
+          backgroundColor: theme.palette.background.default,
+          borderRadius: "4px",
+        }}
       />
       <Button
-        onClick={handleAdd}
-        fullWidth
+        type="submit"
         variant="contained"
-        color="primary"
+        color="warning" // Change button color to better match finance theme
         disabled={loading}
+        sx={{
+          alignSelf: "flex-start",
+          backgroundColor:
+            theme.palette.mode === "dark" ? "#b8860b" : "#ffd700", // Dark: GoldenRod, Light: Gold
+          color: "white",
+          "&:hover": {
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#d4af37" : "#ffea00", // Lighter gold on hover
+          },
+        }}
       >
         {loading ? "Adding..." : "Add Asset"}
       </Button>
-    </div>
+    </Box>
   );
 };
 

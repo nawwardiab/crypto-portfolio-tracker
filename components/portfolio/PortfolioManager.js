@@ -70,7 +70,6 @@ const PortfolioManager = () => {
     }
   };
 
-
   const searchCoinBySymbol = debounce(async (symbol) => {
     if (!symbol.trim()) {
       setSuggestedSymbols([]);
@@ -265,7 +264,6 @@ const PortfolioManager = () => {
       (_, i) => i !== assetToDelete
     );
 
-
     const totalValueUSD = updatedAssets.reduce(
       (acc, asset) => acc + asset.amount * asset.priceUSD,
       0
@@ -280,18 +278,14 @@ const PortfolioManager = () => {
       eur: parseFloat(totalValueEUR.toFixed(2)),
     };
 
-
     try {
       setLoading(true);
-
-
 
       // Save the updated portfolio to Firestore
       await savePortfolio(user.uid, {
         assets: updatedAssets,
         totalValue: updatedTotalValue,
       });
-
 
       // Dispatch Redux action to update the store
       // dispatch(removeCrypto(assetToDelete));
@@ -303,7 +297,6 @@ const PortfolioManager = () => {
       dispatch(
         setPortfolio({ assets: updatedAssets, totalValue: updatedTotalValue })
       );
-
 
       toast.success("Asset deleted successfully!");
 
@@ -368,72 +361,6 @@ const styles = {
     maxWidth: "600px",
     margin: "0 auto",
     color: "white",
-  },
-  form: {
-    marginBottom: "2rem",
-    backgroundColor: "#333",
-    padding: "1rem",
-    borderRadius: "8px",
-    textAlign: "center",
-  },
-  header: {
-    marginBottom: "1rem",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    marginBottom: "10px",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-  },
-  button: {
-    width: "100%",
-    padding: "10px",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  assets: {
-    backgroundColor: "#444",
-    padding: "1rem",
-    borderRadius: "8px",
-  },
-  asset: {
-    marginBottom: "1rem",
-    padding: "0.5rem",
-    backgroundColor: "#555",
-    borderRadius: "4px",
-  },
-  assetButton: {
-    padding: "5px 10px",
-    background: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-  },
-  modal: {
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    backgroundColor: "#333",
-    padding: "1rem",
-    borderRadius: "8px",
-    zIndex: 1000,
-    textAlign: "center",
-  },
-  modalButton: {
-    display: "block",
-    margin: "10px 0",
-    padding: "10px",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
   },
 };
 
