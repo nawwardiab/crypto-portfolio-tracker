@@ -12,6 +12,7 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import zoomPlugin from "chartjs-plugin-zoom"; // Import zoom plugin
 import { useEffect, useState } from "react";
 import { getHistoricalData } from "@/services/coingeckoService";
 import { CircularProgress } from "@mui/material";
@@ -25,7 +26,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  zoomPlugin
 );
 
 const AssetTrendChart = ({ coinId, days = 30 }) => {
@@ -84,6 +86,61 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
     fetchHistoricalData();
   }, [coinId, days]);
 
+  // Chart options with tooltips and zoom/pan enabled
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      title: {
+        display: true,
+        text: `Trend Chart for ${coinId}`,
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return `${context.dataset.label}: $${context.parsed.y.toFixed(2)}`;
+          },
+        },
+      },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "xy",
+          modifierKey: "alt", // Try adding a modifier key (like "alt", "ctrl", or "shift") for Chrome.
+        },
+        zoom: {
+          wheel: {
+            enabled: true,
+            modifierKey: "ctrl", // This makes sure zoom only happens when a key is pressed (useful for browser-specific behavior)
+          },
+          pinch: {
+            enabled: true,
+          },
+          drag: {
+            enabled: true, // Enable drag to zoom.
+          },
+          mode: "xy",
+        },
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Date",
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Price",
+        },
+      },
+    },
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -91,46 +148,7 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
   return (
     <div style={{ width: "100%", height: "400px", marginBottom: "2rem" }}>
       {chartData ? (
-        <Line
-          data={chartData}
-          options={{
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: true,
-                position: "top",
-                labels: {
-                  color: "#fff", // Adjust label color to match theme (white for dark theme)
-                },
-              },
-              tooltip: {
-                enabled: true,
-                mode: "index",
-                intersect: false,
-                callbacks: {
-                  label: (context) => {
-                    return `${
-                      context.dataset.label
-                    }: $${context.parsed.y.toFixed(2)}`;
-                  },
-                },
-              },
-            },
-            scales: {
-              x: {
-                ticks: {
-                  color: "#fff", // White color for x-axis labels in dark mode
-                },
-              },
-              y: {
-                ticks: {
-                  color: "#fff", // White color for y-axis labels in dark mode
-                },
-              },
-            },
-          }}
-        />
+        <Line data={chartData} options={options} />
       ) : (
         <p>No data available.</p>
       )}
