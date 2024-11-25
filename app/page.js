@@ -1,6 +1,5 @@
 "use client";
 
-import Navbar from "../components/Navbar"; // Import the Navbar
 import AuthForm from "@/components/auth/AuthForm"; // Import the reusable AuthForm
 import { Toaster } from "react-hot-toast"; // Import Toaster for global toast notifications
 import {
@@ -13,7 +12,6 @@ import {
   Dialog,
   IconButton,
 } from "@mui/material";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CloseIcon from "@mui/icons-material/Close"; // Import close icon
 
