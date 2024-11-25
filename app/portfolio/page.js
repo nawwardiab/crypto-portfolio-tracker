@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-import PortfolioManager from "@/components/portfolio/PortfolioManager"; // Updated to use PortfolioManager component
+import PortfolioManager from "@/components/portfolio/PortfolioManager"; // Import PortfolioManager
 
 const PortfolioPage = () => {
   const user = useSelector((state) => state.auth.user);
@@ -20,8 +20,8 @@ const PortfolioPage = () => {
       {user ? (
         <>
           <h1 style={styles.header}>Welcome, {user.email}!</h1>
-          <PortfolioManager />{" "}
-          {/* Updated to use PortfolioManager for managing assets */}
+          {/* Use PortfolioManager for managing the entire portfolio view */}
+          <PortfolioManager />
         </>
       ) : (
         <p>Redirecting to login...</p>
@@ -30,6 +30,7 @@ const PortfolioPage = () => {
   );
 };
 
+// Styles for the page container and header
 const styles = {
   container: {
     padding: "2rem",

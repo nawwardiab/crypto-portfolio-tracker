@@ -12,12 +12,11 @@ import {
   Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
-import zoomPlugin from "chartjs-plugin-zoom"; // Import zoom plugin
+import zoomPlugin from "chartjs-plugin-zoom";
 import { useEffect, useState } from "react";
 import { getHistoricalData } from "@/services/coingeckoService";
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, Button, Box, Typography } from "@mui/material";
 
-// Register the required Chart.js components
 ChartJS.register(
   LineElement,
   PointElement,
@@ -30,25 +29,23 @@ ChartJS.register(
   zoomPlugin
 );
 
-const AssetTrendChart = ({ coinId, days = 30 }) => {
+const AssetTrendChart = ({ coinId }) => {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(30);
 
   useEffect(() => {
-    // Fetch historical data when the component mounts
     const fetchHistoricalData = async () => {
       try {
         setLoading(true);
         const historicalData = await getHistoricalData(coinId, days);
 
-        // Transform the historical data into format suitable for Chart.js
         const labels = historicalData.usd.map(([timestamp]) =>
           new Date(timestamp).toLocaleDateString()
         );
         const usdDataPoints = historicalData.usd.map(([, price]) => price);
         const eurDataPoints = historicalData.eur.map(([, price]) => price);
 
-        // Set the chart data
         setChartData({
           labels,
           datasets: [
@@ -56,8 +53,8 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
               label: `${coinId} Price (in USD)`,
               data: usdDataPoints,
               fill: true,
-              borderColor: "rgba(255, 215, 0, 1)", // Gold color for USD
-              backgroundColor: "rgba(255, 215, 0, 0.1)", // Light gold background for filled area
+              borderColor: "rgba(255, 215, 0, 1)",
+              backgroundColor: "rgba(255, 215, 0, 0.1)",
               tension: 0.4,
               pointRadius: 4,
               pointBackgroundColor: "rgba(255, 215, 0, 1)",
@@ -67,8 +64,8 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
               label: `${coinId} Price (in EUR)`,
               data: eurDataPoints,
               fill: true,
-              borderColor: "rgba(0, 191, 255, 1)", // Sky blue color for EUR
-              backgroundColor: "rgba(0, 191, 255, 0.1)", // Light blue background for filled area
+              borderColor: "rgba(0, 191, 255, 1)",
+              backgroundColor: "rgba(0, 191, 255, 0.1)",
               tension: 0.4,
               pointRadius: 4,
               pointBackgroundColor: "rgba(0, 191, 255, 1)",
@@ -86,7 +83,6 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
     fetchHistoricalData();
   }, [coinId, days]);
 
-  // Chart options with tooltips and zoom/pan enabled
   const options = {
     responsive: true,
     plugins: {
@@ -108,18 +104,13 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
         pan: {
           enabled: true,
           mode: "xy",
-          modifierKey: "alt", // Try adding a modifier key (like "alt", "ctrl", or "shift") for Chrome.
         },
         zoom: {
           wheel: {
             enabled: true,
-            modifierKey: "ctrl", // This makes sure zoom only happens when a key is pressed (useful for browser-specific behavior)
           },
           pinch: {
             enabled: true,
-          },
-          drag: {
-            enabled: true, // Enable drag to zoom.
           },
           mode: "xy",
         },
@@ -141,18 +132,79 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
     },
   };
 
-  if (loading) {
-    return <CircularProgress />;
-  }
+  const handleTimeRangeChange = (newDays) => {
+    setDays(newDays);
+  };
 
   return (
-    <div style={{ width: "100%", height: "400px", marginBottom: "2rem" }}>
-      {chartData ? (
-        <Line data={chartData} options={options} />
+    <Box sx={{ width: "100%", mb: 4, p: 3 }}>
+      {loading ? (
+        <CircularProgress />
+      ) : chartData ? (
+        <>
+          <Typography variant="h6" sx={{ textAlign: "center", mb: 2 }}>
+            Select Time Range
+          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 2, // Spacing between buttons
+              mb: 3, // Margin below buttons
+            }}
+          >
+            <Button
+              variant={days === 7 ? "contained" : "outlined"}
+              onClick={() => handleTimeRangeChange(7)}
+              sx={{
+                color: "white",
+                borderColor: "yellow",
+                "&:hover": { backgroundColor: "rgba(255, 255, 0, 0.1)" },
+              }}
+            >
+              1 Week
+            </Button>
+            <Button
+              variant={days === 30 ? "contained" : "outlined"}
+              onClick={() => handleTimeRangeChange(30)}
+              sx={{
+                color: "white",
+                borderColor: "yellow",
+                "&:hover": { backgroundColor: "rgba(255, 255, 0, 0.1)" },
+              }}
+            >
+              1 Month
+            </Button>
+            <Button
+              variant={days === 90 ? "contained" : "outlined"}
+              onClick={() => handleTimeRangeChange(90)}
+              sx={{
+                color: "white",
+                borderColor: "yellow",
+                "&:hover": { backgroundColor: "rgba(255, 255, 0, 0.1)" },
+              }}
+            >
+              3 Months
+            </Button>
+            <Button
+              variant={days === 365 ? "contained" : "outlined"}
+              onClick={() => handleTimeRangeChange(365)}
+              sx={{
+                color: "white",
+                borderColor: "yellow",
+                "&:hover": { backgroundColor: "rgba(255, 255, 0, 0.1)" },
+              }}
+            >
+              1 Year
+            </Button>
+          </Box>
+          <Line data={chartData} options={options} />
+        </>
       ) : (
-        <p>No data available.</p>
+        <Typography>No data available.</Typography>
       )}
-    </div>
+    </Box>
   );
 };
 

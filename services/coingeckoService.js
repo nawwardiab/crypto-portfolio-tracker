@@ -100,32 +100,29 @@ export const getCoinId = async (symbol) => {
   }
 };
 
-export const getHistoricalData = async (coinId, days = 30, retries = 3) => {
+export const getHistoricalData = async (coinId, days = 30) => {
   try {
-    // Fetch historical data for USD
-    const responseUSD = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart`,
-      {
-        params: {
-          vs_currency: "usd",
-          days: days,
-        },
-      }
-    );
-
-    // Add a small delay to prevent hitting rate limits
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Fetch historical data for EUR
-    const responseEUR = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart`,
-      {
-        params: {
-          vs_currency: "eur",
-          days: days,
-        },
-      }
-    );
+    // Fetch historical data for USD and EUR concurrently
+    const [responseUSD, responseEUR] = await Promise.all([
+      axios.get(
+        `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart`,
+        {
+          params: {
+            vs_currency: "usd",
+            days: days,
+          },
+        }
+      ),
+      axios.get(
+        `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart`,
+        {
+          params: {
+            vs_currency: "eur",
+            days: days,
+          },
+        }
+      ),
+    ]);
 
     if (
       responseUSD.data &&
@@ -145,7 +142,7 @@ export const getHistoricalData = async (coinId, days = 30, retries = 3) => {
     if (retries > 0) {
       console.log(`Retrying... (${retries} retries left)`);
       await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait before retrying
-      return getHistoricalData(coinId, days, retries - 1);
+      return getHistoricalData(coinId, days);
     } else {
       throw error;
     }

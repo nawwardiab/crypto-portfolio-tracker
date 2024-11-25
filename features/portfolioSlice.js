@@ -27,7 +27,6 @@ const portfolioSlice = createSlice({
       state.totalValue.eur += parseFloat(
         action.payload.priceEUR * action.payload.amount
       ).toFixed(2);
-
     },
     removeCrypto: (state, action) => {
       console.log("removeCrypto called with payload:", action.payload);
@@ -47,7 +46,6 @@ const portfolioSlice = createSlice({
         { usd: 0, eur: 0 }
       );
       state.totalValue = updatedTotalValue;
-
     },
     updateCrypto: (state, action) => {
       const { id, updateAsset } = action.payload;
@@ -69,7 +67,6 @@ const portfolioSlice = createSlice({
           ...updateAsset,
         };
 
-
         // Recalculate totalValue
         const updatedTotalValue = state.assets.reduce(
           (total, asset) => {
@@ -80,7 +77,6 @@ const portfolioSlice = createSlice({
           { usd: 0, eur: 0 }
         );
         state.totalValue = updatedTotalValue;
-
       }
     },
   },
@@ -88,5 +84,6 @@ const portfolioSlice = createSlice({
 
 export const { setPortfolio, addCrypto, removeCrypto, updateCrypto } =
   portfolioSlice.actions;
+export const selectPortfolio = (state) => state.portfolio;
 
 export default portfolioSlice.reducer;
