@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { useEffect, useState } from "react";
@@ -23,7 +24,8 @@ ChartJS.register(
   CategoryScale,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const AssetTrendChart = ({ coinId, days = 30 }) => {
@@ -51,16 +53,24 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
             {
               label: `${coinId} Price (in USD)`,
               data: usdDataPoints,
-              fill: false,
-              borderColor: "rgba(75,192,192,1)",
-              tension: 0.1,
+              fill: true,
+              borderColor: "rgba(255, 215, 0, 1)", // Gold color for USD
+              backgroundColor: "rgba(255, 215, 0, 0.1)", // Light gold background for filled area
+              tension: 0.4,
+              pointRadius: 4,
+              pointBackgroundColor: "rgba(255, 215, 0, 1)",
+              pointHoverRadius: 6,
             },
             {
               label: `${coinId} Price (in EUR)`,
               data: eurDataPoints,
-              fill: false,
-              borderColor: "rgba(192,75,75,1)",
-              tension: 0.1,
+              fill: true,
+              borderColor: "rgba(0, 191, 255, 1)", // Sky blue color for EUR
+              backgroundColor: "rgba(0, 191, 255, 0.1)", // Light blue background for filled area
+              tension: 0.4,
+              pointRadius: 4,
+              pointBackgroundColor: "rgba(0, 191, 255, 1)",
+              pointHoverRadius: 6,
             },
           ],
         });
@@ -80,7 +90,50 @@ const AssetTrendChart = ({ coinId, days = 30 }) => {
 
   return (
     <div style={{ width: "100%", height: "400px", marginBottom: "2rem" }}>
-      {chartData ? <Line data={chartData} /> : <p>No data available.</p>}
+      {chartData ? (
+        <Line
+          data={chartData}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: "top",
+                labels: {
+                  color: "#fff", // Adjust label color to match theme (white for dark theme)
+                },
+              },
+              tooltip: {
+                enabled: true,
+                mode: "index",
+                intersect: false,
+                callbacks: {
+                  label: (context) => {
+                    return `${
+                      context.dataset.label
+                    }: $${context.parsed.y.toFixed(2)}`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: "#fff", // White color for x-axis labels in dark mode
+                },
+              },
+              y: {
+                ticks: {
+                  color: "#fff", // White color for y-axis labels in dark mode
+                },
+              },
+            },
+          }}
+        />
+      ) : (
+        <p>No data available.</p>
+      )}
     </div>
   );
 };

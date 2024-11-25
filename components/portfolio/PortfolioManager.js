@@ -19,6 +19,15 @@ import {
   updateCrypto,
 } from "@/features/portfolioSlice";
 import PortfolioChart from "./PortfolioChart";
+import {
+  Grid,
+  Box,
+  Card,
+  Collapse,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const PortfolioManager = () => {
   const dispatch = useDispatch();
@@ -30,7 +39,11 @@ const PortfolioManager = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState(null);
   const [suggestedSymbols, setSuggestedSymbols] = useState([]);
+  const [expanded, setExpanded] = useState(false);
 
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+  };
   // Fetch user's portfolio on component mount
   useEffect(() => {
     if (user) {
@@ -321,38 +334,63 @@ const PortfolioManager = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <PortfolioChart />
-      <AddAssetForm
-        cryptoSymbol={cryptoSymbol}
-        setCryptoSymbol={setCryptoSymbol}
-        amount={amount}
-        setAmount={setAmount}
-        addAsset={handleAddAsset}
-        loading={loading}
-        suggestedSymbols={suggestedSymbols}
-        searchCoinBySymbol={searchCoinBySymbol}
-      />
-      <PortfolioDetails
-        assets={portfolio.assets}
-        loading={loading}
-        handleEditAsset={handleEditAsset}
-        openDeleteConfirmation={openDeleteConfirmation}
-        totalValueUSD={portfolio.assets.reduce(
-          (acc, asset) => acc + asset.amount * asset.priceUSD,
-          0
-        )}
-        totalValueEUR={portfolio.assets.reduce(
-          (acc, asset) => acc + asset.amount * asset.priceEUR,
-          0
-        )}
-      />
+    <Box sx={{ padding: "2rem" }}>
+      {/* Chart Section */}
+      <Box sx={{ marginBottom: "2rem" }}>
+        <PortfolioChart />
+      </Box>
+
+      {/* Two-Column Layout */}
+      <Grid container spacing={4}>
+        {/* Left Column: Portfolio Details */}
+        <Grid item xs={12} md={8}>
+          <PortfolioDetails
+            assets={portfolio.assets}
+            loading={loading}
+            handleEditAsset={handleEditAsset}
+            openDeleteConfirmation={openDeleteConfirmation}
+            totalValueUSD={portfolio.assets.reduce(
+              (acc, asset) => acc + asset.amount * asset.priceUSD,
+              0
+            )}
+            totalValueEUR={portfolio.assets.reduce(
+              (acc, asset) => acc + asset.amount * asset.priceEUR,
+              0
+            )}
+          />
+        </Grid>
+
+        {/* Right Column: Add Asset Form */}
+        <Grid item xs={12} md={4}>
+          <Box
+            sx={{
+              backgroundColor: "background.paper",
+              padding: "2rem",
+              borderRadius: "8px",
+              boxShadow: 2,
+            }}
+          >
+            <AddAssetForm
+              cryptoSymbol={cryptoSymbol}
+              setCryptoSymbol={setCryptoSymbol}
+              amount={amount}
+              setAmount={setAmount}
+              addAsset={handleAddAsset}
+              loading={loading}
+              suggestedSymbols={suggestedSymbols}
+              searchCoinBySymbol={searchCoinBySymbol}
+            />
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={openDeleteDialog}
         onClose={closeDeleteConfirmation}
         onDelete={handleDeleteAsset}
       />
-    </div>
+    </Box>
   );
 };
 
