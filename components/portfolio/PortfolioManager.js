@@ -19,6 +19,8 @@ import {
   updateCrypto,
 } from "@/features/portfolioSlice";
 import PortfolioChart from "./PortfolioChart";
+import { Pie } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import {
   Grid,
   Box,
@@ -27,7 +29,6 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const PortfolioManager = () => {
   const dispatch = useDispatch();
@@ -55,9 +56,6 @@ const PortfolioManager = () => {
     try {
       setLoading(true);
       const portfolio = await getPortfolio(user.uid);
-      console.log("=== LOADED PORTFOLIO ===");
-      console.log("Fetched Assets:", portfolio.assets);
-      console.log("Fetched Total Value:", portfolio.totalValue);
       // Handle totalValue properly
       if (portfolio.totalValue && typeof portfolio.totalValue === "object") {
         portfolio.totalValue = {
@@ -71,9 +69,6 @@ const PortfolioManager = () => {
         };
       }
 
-      console.log("Processed Total Value:", portfolio.totalValue);
-
-      console.log("🚀 ~ loadPortfolio ~ user.uid:", user.uid);
       dispatch(setPortfolio(portfolio));
       setLoading(false);
     } catch (error) {
@@ -90,7 +85,6 @@ const PortfolioManager = () => {
     }
 
     try {
-      console.log("🚀 ~ Searching coins with symbol:", symbol); // Debugging log
       const matchingCoins = await searchCoins(symbol);
 
       if (!matchingCoins || matchingCoins.length === 0) {
@@ -333,11 +327,114 @@ const PortfolioManager = () => {
     setAssetToDelete(null);
   };
 
+  // Prepare Pie Chart Data
+  const pieChartData = {
+    labels: portfolio.assets.map((asset) => asset.symbol),
+    datasets: [
+      {
+        label: "Asset Allocation",
+        data: portfolio.assets.map((asset) => asset.priceUSD * asset.amount),
+        backgroundColor: [
+          "#4e79a7", // Soft blue
+          "#f28e2b", // Soft orange
+          "#e15759", // Soft red
+          "#76b7b2", // Soft teal
+          "#59a14f", // Soft green
+        ],
+        hoverOffset: 4,
+        borderWidth: 1,
+        borderColor: "#333", // Darker border to blend well with dark theme
+      },
+    ],
+  };
+
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom", // Position of the legend (you can tweak this as needed)
+      },
+    },
+    layout: {
+      padding: 10, // Padding around the pie chart
+    },
+  };
+
+  // Function to calculate portfolio summary
+  const calculateSummary = () => {
+    let totalUSD = 0;
+    let totalEUR = 0;
+    let topAsset = null;
+    let topGain = -Infinity;
+
+    portfolio.assets.forEach((asset) => {
+      const assetValueUSD = asset.priceUSD * asset.amount;
+      totalUSD += assetValueUSD;
+      totalEUR += asset.priceEUR * asset.amount;
+
+      // Calculate top-performing asset
+      const initialInvestment = asset.initialInvestmentUSD || 0;
+      if (initialInvestment > 0) {
+        const gain =
+          ((assetValueUSD - initialInvestment) / initialInvestment) * 100;
+        if (gain > topGain) {
+          topGain = gain;
+          topAsset = asset.symbol;
+        }
+      }
+    });
+
+    const gainLoss = portfolio.assets.length
+      ? ((totalUSD -
+          portfolio.assets.reduce(
+            (acc, asset) => acc + (asset.initialInvestmentUSD || 0),
+            0
+          )) /
+          portfolio.assets.reduce(
+            (acc, asset) => acc + (asset.initialInvestmentUSD || 0),
+            0
+          )) *
+        100
+      : 0;
+
+    return {
+      totalUSD,
+      totalEUR,
+      gainLoss: gainLoss.toFixed(2),
+      topAsset,
+    };
+  };
+
+  const summary = calculateSummary();
   return (
     <Box sx={{ padding: "2rem" }}>
-      {/* Chart Section */}
-      <Box sx={{ marginBottom: "2rem" }}>
-        <PortfolioChart />
+      {/* Summary Section */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          mb: 4,
+          backgroundColor: "#1e1e1e",
+          padding: "1rem",
+          borderRadius: "8px",
+        }}
+      >
+        <Typography variant="h5" gutterBottom>
+          Portfolio Summary
+        </Typography>
+        <Typography variant="body1">
+          Total Portfolio Value: USD ${summary.totalUSD.toFixed(2)} | EUR €
+          {summary.totalEUR.toFixed(2)}
+        </Typography>
+        <Typography variant="body1" sx={{ mt: 1 }}>
+          Total Gain/Loss: {summary.gainLoss}%
+        </Typography>
+        <Typography variant="body1" sx={{ mt: 1 }}>
+          Top Performing Asset: {summary.topAsset || "N/A"}
+        </Typography>
       </Box>
 
       {/* Two-Column Layout */}
@@ -349,14 +446,8 @@ const PortfolioManager = () => {
             loading={loading}
             handleEditAsset={handleEditAsset}
             openDeleteConfirmation={openDeleteConfirmation}
-            totalValueUSD={portfolio.assets.reduce(
-              (acc, asset) => acc + asset.amount * asset.priceUSD,
-              0
-            )}
-            totalValueEUR={portfolio.assets.reduce(
-              (acc, asset) => acc + asset.amount * asset.priceEUR,
-              0
-            )}
+            totalValueUSD={summary.totalUSD}
+            totalValueEUR={summary.totalEUR}
           />
         </Grid>
 
@@ -364,7 +455,7 @@ const PortfolioManager = () => {
         <Grid item xs={12} md={4}>
           <Box
             sx={{
-              backgroundColor: "background.paper",
+              backgroundColor: "#333333",
               padding: "2rem",
               borderRadius: "8px",
               boxShadow: 2,
@@ -380,6 +471,35 @@ const PortfolioManager = () => {
               suggestedSymbols={suggestedSymbols}
               searchCoinBySymbol={searchCoinBySymbol}
             />
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Chart Section */}
+      <Box sx={{ marginBottom: "2rem" }}>
+        <PortfolioChart />
+      </Box>
+
+      {/* Pie Chart Section */}
+      <Grid container justifyContent="center" sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Box
+            sx={{
+              backgroundColor: "#1e1e1e",
+              padding: "2rem",
+              borderRadius: "8px",
+              textAlign: "center",
+              height: "600px", // Reduce the height to make the chart smaller
+              width: "750px", // Reduce the width to make the chart smaller
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-around",
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Asset Allocation
+            </Typography>
+            <Pie data={pieChartData} options={pieChartOptions} />
           </Box>
         </Grid>
       </Grid>
