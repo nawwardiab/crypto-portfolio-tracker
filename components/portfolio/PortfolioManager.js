@@ -29,6 +29,7 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const PortfolioManager = () => {
   const dispatch = useDispatch();
