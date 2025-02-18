@@ -26,18 +26,15 @@ export const auth = getAuth(firebaseApp);
 export const getPortfolio = async (userId) => {
   if (!db) return;
   try {
-    console.log("Fetching portfolio for user:", userId); // Log before fetching data
-
     const portfolioDoc = await getDoc(doc(db, "portfolios", userId));
     if (portfolioDoc.exists()) {
       const fetchedData = portfolioDoc.data();
-      console.log("Portfolio data fetched successfully:", portfolioDoc.data()); // Log fetched data
       return {
         assets: fetchedData.assets || [],
         totalValue: fetchedData.totalValue || { usd: 0, eur: 0 },
       };
     } else {
-      console.warn("No portfolio found for user:", userId);
+      console.warn("No portfolio found for user");
       return { assets: [], totalValue: { usd: 0, eur: 0 } };
     }
   } catch (error) {
@@ -52,9 +49,6 @@ export const savePortfolio = async (userId, portfolioData) => {
     return;
   }
   try {
-    console.log("Attempting to save portfolio to Firestore for user:", userId);
-    console.log("Portfolio data to be saved:", portfolioData); // Log data being saved
-
     // Ensure portfolioData.assets is never undefined, and totalValue has both usd and eur
     const totalValue = portfolioData.totalValue || { usd: 0, eur: 0 };
 
@@ -66,30 +60,13 @@ export const savePortfolio = async (userId, portfolioData) => {
         eur: totalValue.eur ? parseFloat(totalValue.eur.toFixed(2)) : 0,
       }, // Update to include total value
     };
-    console.log("Data being saved to Firestore:", dataToSave);
 
     await setDoc(doc(db, "portfolios", userId), dataToSave, { merge: true });
-
-    console.log("Portfolio saved successfully for user:", userId);
   } catch (error) {
     console.error("Error saving portfolio:", error.message);
     throw error;
   }
 };
-// const testSavePortfolio = async () => {
-//   try {
-//     const testUserId = "testUserId";
-//     const testPortfolioData = {
-//       assets: [{ symbol: "BTC", amount: 1 }],
-//       totalValue: 50000,
-//     };
-//     await savePortfolio(testUserId, testPortfolioData);
-//     console.log("Test save successful");
-//   } catch (error) {
-//     console.error("Test save failed:", error);
-//   }
-// };
-// testSavePortfolio();
 
 // Firebase Auth Operations
 export const createUser = async (email, password) => {
@@ -99,7 +76,6 @@ export const createUser = async (email, password) => {
       email,
       password
     );
-    console.log("User signed up:", userCredential.user);
     return userCredential.user;
   } catch (error) {
     console.error("Error signing up:", error.message);
@@ -114,7 +90,6 @@ export const logInUser = async (email, password) => {
       email,
       password
     );
-    console.log("User logged in:", userCredential.user);
     return userCredential.user;
   } catch (error) {
     console.error("Error logging in:", error.message);

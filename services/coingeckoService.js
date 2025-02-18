@@ -6,7 +6,7 @@ export const getSupportedCoins = async () => {
     const response = await axios.get(
       "https://api.coingecko.com/api/v3/coins/list"
     );
-    // console.log("API response from CoinGecko:", response.data); // Log API response
+
     return response.data; // Returns an array of supported coins
   } catch (error) {
     console.error("Error fetching supported coins:", error);
@@ -27,7 +27,6 @@ export const getCryptoPrice = async (coinId) => {
         },
       }
     );
-    console.log("Price data from API", response.data);
 
     if (response.data[coinId]) {
       return response.data[coinId]; // Return both USD and EUR prices
@@ -50,7 +49,6 @@ export const searchCoins = async (query) => {
         },
       }
     );
-    console.log("Response from CoinGecko search:", response);
     return response.data.coins;
   } catch (error) {
     console.error("Error searching coins:", error);
@@ -140,7 +138,6 @@ export const getHistoricalData = async (coinId, days = 30) => {
   } catch (error) {
     console.error("Error fetching historical data:", error);
     if (retries > 0) {
-      console.log(`Retrying... (${retries} retries left)`);
       await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait before retrying
       return getHistoricalData(coinId, days);
     } else {

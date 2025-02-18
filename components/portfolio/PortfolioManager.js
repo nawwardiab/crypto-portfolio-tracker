@@ -102,7 +102,6 @@ const PortfolioManager = () => {
         }))
       );
 
-      console.log("🚀 ~ Matching Coins:", matchingCoins);
       // Return first matching coin if only one match is found
       return matchingCoins.length === 1 ? matchingCoins[0] : null;
     } catch (error) {
@@ -152,13 +151,7 @@ const PortfolioManager = () => {
 
       // Update assets and calculate total value
       const updatedAssets = [...portfolio.assets, newAsset];
-      // let totalValueUSD = 0;
-      // let totalValueEUR = 0;
 
-      // updatedAssets.forEach((asset) => {
-      //   totalValueUSD += asset.priceUSD * asset.amount;
-      //   totalValueEUR += asset.priceEUR * asset.amount;
-      // });
       // Calculate new total value
       const totalValueUSD = updatedAssets.reduce(
         (acc, asset) => acc + asset.amount * asset.priceUSD,
@@ -172,10 +165,6 @@ const PortfolioManager = () => {
         usd: parseFloat(totalValueUSD.toFixed(2)),
         eur: parseFloat(totalValueEUR.toFixed(2)),
       };
-
-      // Check the computed total value before saving
-      console.log("Total Value USD:", updatedTotalValue.usd);
-      console.log("Total Value EUR:", updatedTotalValue.eur);
 
       // Save to Firestore
       await savePortfolio(user.uid, {
@@ -222,14 +211,6 @@ const PortfolioManager = () => {
       (acc, asset) => acc + asset.amount * asset.priceEUR,
       0
     );
-
-    // let totalValueUSD = 0;
-    // let totalValueEUR = 0;
-
-    // updatedAssets.forEach((asset) => {
-    //   totalValueUSD += asset.priceUSD * asset.amount;
-    //   totalValueEUR += asset.priceEUR * asset.amount;
-    // });
 
     const updatedTotalValue = {
       usd: parseFloat(totalValueUSD.toFixed(2)),
@@ -294,9 +275,6 @@ const PortfolioManager = () => {
         assets: updatedAssets,
         totalValue: updatedTotalValue,
       });
-
-      // Dispatch Redux action to update the store
-      // dispatch(removeCrypto(assetToDelete));
 
       // Dispatch the removal to Redux to update the specific asset
       dispatch(removeCrypto(portfolio.assets[assetToDelete].id));
