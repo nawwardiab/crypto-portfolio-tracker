@@ -12,13 +12,10 @@ const portfolioSlice = createSlice({
   initialState,
   reducers: {
     setPortfolio: (state, action) => {
-      console.log("setPortfolio called with payload:", action.payload);
       state.assets = action.payload.assets;
       state.totalValue = action.payload.totalValue;
     },
     addCrypto: (state, action) => {
-      console.log("addCrypto called with payload:", action.payload);
-
       state.assets.push(action.payload);
       // Update totalValue accurately after adding a new asset
       state.totalValue.usd += parseFloat(
@@ -29,8 +26,6 @@ const portfolioSlice = createSlice({
       ).toFixed(2);
     },
     removeCrypto: (state, action) => {
-      console.log("removeCrypto called with payload:", action.payload);
-
       // Find the asset to be removed
       const assetToRemove = state.assets.find(
         (asset) => asset.symbol === action.payload
@@ -52,8 +47,6 @@ const portfolioSlice = createSlice({
 
       const index = state.assets.findIndex((asset) => asset.symbol === id);
       if (index !== -1) {
-        console.log("updateCrypto called with payload:", action.payload);
-
         // Update the asset and recalculate the total value accordingly
         const oldAsset = state.assets[index];
         const newAmount = updateAsset.amount;

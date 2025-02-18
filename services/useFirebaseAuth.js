@@ -20,7 +20,6 @@ export const useFirebaseAuth = () => {
     // Listen for auth state changes and update Redux state
     onAuthStateChangeListener((user) => {
       if (user) {
-        console.log("User logged in:", user);
         dispatch(
           setUser({
             uid: user.uid,
@@ -28,7 +27,6 @@ export const useFirebaseAuth = () => {
           })
         );
       } else {
-        console.log("User logged out");
         dispatch(clearUser());
       }
     });
@@ -36,8 +34,7 @@ export const useFirebaseAuth = () => {
 
   const signUp = async (email, password) => {
     try {
-      const user = await createUser(email, password);
-      console.log("User signed up successfully, please log in:", user);
+      await createUser(email, password);
     } catch (error) {
       console.error("Sign-up error:", error.message);
       setError(error.message);
